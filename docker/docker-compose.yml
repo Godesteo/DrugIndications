@@ -1,0 +1,39 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      SA_PASSWORD: "Password!Passw0rd"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    networks:
+      - mynetwork
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  api:
+    build:
+      context: ../
+      dockerfile: src/DrugIndications.API/Dockerfile
+    container_name: drugindications_api
+    ports:
+      - "5000:80"
+    depends_on:
+      - sqlserver
+    environment:
+      - Jwt__Key=supersecurejwtkeythatismorethan32chars!
+      - Jwt__Issuer=your-app
+      - Jwt__Audience=your-app-users
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Default=Server=sqlserver;Database=DrugDb;User Id=sa;Password=Password!Passw0rd;Encrypt=False;TrustServerCertificate=True;
+    networks:
+      - mynetwork
+
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  sql_data:
